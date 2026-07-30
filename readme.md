@@ -29,7 +29,7 @@ chmod +x nova.py
 # Create a system-wide command shortcut
 sudo ln -s "$(pwd)/nova.py" /usr/local/bin/nova
 
-
+```
 ## Language Specifications & Built-in Features
 
 ### 1. Data Types & Primitives
