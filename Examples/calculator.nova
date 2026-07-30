@@ -1,0 +1,14 @@
+let num1 = 20;
+let num2 = 5;
+
+let sum = num1 + num2;
+let difference = num1 - num2;
+let product = num1 * num2;
+let quotient = num1 / num2;
+
+print "Number 1: " + num1;
+print "Number 2: " + num2;
+print "Sum: " + sum;
+print "Difference: " + difference;
+print "Product: " + product;
+print "Quotient: " + quotient;

@@ -1,0 +1,6 @@
+print "Hello, World!";
+
+let language = "Nova Script";
+let version = 1.0;
+
+print "Welcome to " + language + " version " + version;
