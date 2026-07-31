@@ -640,7 +640,7 @@ def run_file(file_path):
 
 def run_repl():
     interpreter = Interpreter()
-    print("Nova Script 1.0 Shell (Case-Insensitive)")
+    print("Nova Script 2.1 Shell (Case-Insensitive)")
     print("Type 'exit' to quit.\n")
 
     while True:
