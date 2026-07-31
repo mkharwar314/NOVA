@@ -1,3 +1,5 @@
+# Nova Script (`.nova`)
+
 > A lightweight, clean, case-insensitive, dynamically typed scripting language built in Python.
 
 Nova Script is an interpreted programming language designed from scratch with an intuitive and forgiving syntax. Keywords, variable names, and function identifiers are completely **case-insensitive**, making script writing fast and user-friendly.
