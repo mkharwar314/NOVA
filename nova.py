@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import sys
+import time
 
 # =============================================================================
-# 1. LEXER (TOKENIZER)
+# 1. LEXER (TOKENIZER) - CASE INSENSITIVE
 # =============================================================================
 
 class TokenType:
@@ -84,10 +85,16 @@ class Lexer:
                 continue
             elif c == '\n':
                 self.line += 1
+            elif c == '/':
+                # Handle single-line comments //
+                if self.match('/'):
+                    while self.peek() != '\n' and not self.is_at_end():
+                        self.advance()
+                else:
+                    self.add_token(TokenType.SLASH)
             elif c == '+': self.add_token(TokenType.PLUS)
             elif c == '-': self.add_token(TokenType.MINUS)
             elif c == '*': self.add_token(TokenType.STAR)
-            elif c == '/': self.add_token(TokenType.SLASH)
             elif c == '(': self.add_token(TokenType.LPAREN)
             elif c == ')': self.add_token(TokenType.RPAREN)
             elif c == '{': self.add_token(TokenType.LBRACE)
@@ -159,8 +166,12 @@ class Lexer:
         while self.peek().isalnum() or self.peek() == '_':
             self.advance()
         text = self.source[self.start:self.current]
-        type_ = KEYWORDS.get(text, TokenType.IDENTIFIER)
-        self.add_token(type_)
+        
+        # Case-Insensitive Lookup
+        lower_text = text.lower()
+        type_ = KEYWORDS.get(lower_text, TokenType.IDENTIFIER)
+        stored_val = lower_text if type_ == TokenType.IDENTIFIER else text
+        self.add_token(type_, stored_val)
 
 
 # =============================================================================
@@ -414,7 +425,7 @@ class Parser:
 
 
 # =============================================================================
-# 3. INTERPRETER & ENVIRONMENT
+# 3. INTERPRETER & ENVIRONMENT - CASE INSENSITIVE
 # =============================================================================
 
 class ReturnValue(Exception):
@@ -427,23 +438,37 @@ class Environment:
         self.enclosing = enclosing
 
     def define(self, name, value):
-        self.values[name] = value
+        # Store in lower case for case-insensitivity
+        self.values[name.lower()] = value
 
     def get(self, name):
-        if name in self.values:
-            return self.values[name]
+        key = name.lower()
+        if key in self.values:
+            return self.values[key]
         if self.enclosing:
-            return self.enclosing.get(name)
+            return self.enclosing.get(key)
         raise NameError(f"Undefined variable '{name}'.")
 
     def assign(self, name, value):
-        if name in self.values:
-            self.values[name] = value
+        key = name.lower()
+        if key in self.values:
+            self.values[key] = value
             return
         if self.enclosing:
-            self.enclosing.assign(name, value)
+            self.enclosing.assign(key, value)
             return
         raise NameError(f"Undefined variable '{name}'.")
+
+class NativeFunction:
+    """Wrapper for built-in functions defined in Python."""
+    def __init__(self, fn):
+        self.fn = fn
+
+    def call(self, interpreter, arguments):
+        return self.fn(interpreter, arguments)
+
+    def __repr__(self):
+        return "<native fn>"
 
 class NovaFunction:
     def __init__(self, declaration, closure):
@@ -464,6 +489,26 @@ class Interpreter:
     def __init__(self):
         self.globals = Environment()
         self.environment = self.globals
+
+        # Register Native Built-in Functions
+        def _native_input(interpreter, args):
+            prompt = interpreter.stringify(args[0]) if len(args) > 0 else ""
+            return input(prompt)
+
+        def _native_clock(interpreter, args):
+            return time.time()
+
+        def _native_len(interpreter, args):
+            if len(args) == 0:
+                raise TypeError("len() expects 1 argument.")
+            val = args[0]
+            if isinstance(val, str):
+                return float(len(val))
+            raise TypeError("len() argument must be a string.")
+
+        self.globals.define("input", NativeFunction(_native_input))
+        self.globals.define("clock", NativeFunction(_native_clock))
+        self.globals.define("len", NativeFunction(_native_len))
 
     def interpret(self, statements):
         try:
@@ -556,9 +601,9 @@ class Interpreter:
     def visit_Call(self, node):
         callee = self.evaluate(node.callee)
         args = [self.evaluate(arg) for arg in node.arguments]
-        if not isinstance(callee, NovaFunction):
-            raise TypeError("Can only call functions.")
-        return callee.call(self, args)
+        if isinstance(callee, (NovaFunction, NativeFunction)):
+            return callee.call(self, args)
+        raise TypeError("Can only call functions.")
 
     def visit_ReturnStmt(self, node):
         val = self.evaluate(node.value) if node.value else None
@@ -595,13 +640,13 @@ def run_file(file_path):
 
 def run_repl():
     interpreter = Interpreter()
-    print("Nova Script 1.0 Shell")
+    print("Nova Script 1.0 Shell (Case-Insensitive)")
     print("Type 'exit' to quit.\n")
 
     while True:
         try:
             line = input("nova > ")
-            if line.strip() == "exit":
+            if line.strip().lower() == "exit":
                 break
             if not line.strip():
                 continue
