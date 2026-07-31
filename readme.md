@@ -278,7 +278,3 @@ WHILE Count > 0 {
 ```
 
 ---
-
-# License
-
-Choose a license for Nova Script (MIT, Apache-2.0, GPL-3.0, etc.) and include it here.
